@@ -8,54 +8,58 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   :root{
     --bg:#f7f6f4;--card:#ffffff;--border:#e4e2de;
-    --text:#1a1916;--sub:#6b6960;--muted:#a09e97;
-    --taken:#d4edda;--taken-text:#1a6335;
+    --text:#1a1916;--sub:#6b6960;--muted:#b0ada6;
+    --taken:#d4edda;--taken-text:#1a6335;--taken-border:#98d3aa;
     --accent:#2563eb;--accent-bg:#eff6ff;--radius:10px;
+    --period-bg:#efefed;
   }
   @media(prefers-color-scheme:dark){:root{
     --bg:#141412;--card:#1e1d1b;--border:#2e2d2a;
     --text:#f0ede8;--sub:#8a8880;--muted:#5a5855;
-    --taken:#0f2e1a;--taken-text:#6ee09a;
-    --accent:#60a5fa;--accent-bg:#1e3a5f;
+    --taken:#0f2e1a;--taken-text:#6ee09a;--taken-border:#1e5c35;
+    --accent:#60a5fa;--accent-bg:#1e3a5f;--period-bg:#1a1918;
   }}
-  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB',sans-serif;font-size:17px;min-height:100dvh}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB',sans-serif;font-size:15px;min-height:100dvh}
 
-  header{padding:20px 16px 14px;border-bottom:1px solid var(--border);background:var(--card)}
-  .header-en{font-size:14px;font-weight:500;color:var(--sub)}
-  .header-zh{font-size:24px;font-weight:600;letter-spacing:-0.3px;margin:3px 0 6px}
-  .header-sub{font-size:14px;color:var(--sub);line-height:1.5}
-  .header-sub-zh{font-size:15px;color:var(--sub);margin-top:2px;line-height:1.5}
+  header{padding:18px 16px 12px;border-bottom:1px solid var(--border);background:var(--card)}
+  .header-en{font-size:13px;font-weight:500;color:var(--sub)}
+  .header-zh{font-size:22px;font-weight:600;margin:2px 0 5px}
+  .header-subs{font-size:13px;color:var(--sub);line-height:1.6}
 
-  .sync-bar{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border)}
-  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background 0.3s}
+  .sync-bar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding:8px 16px;background:var(--card);border-bottom:1px solid var(--border)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background 0.3s}
   .dot.ok{background:#22c55e}.dot.err{background:#ef4444}.dot.loading{background:#f59e0b;animation:pulse 1s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-  .refresh-btn{margin-left:auto;cursor:pointer;font-size:14px;color:var(--accent)}
+  .refresh-btn{margin-left:auto;cursor:pointer;color:var(--accent)}
 
-  .days-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .days-grid{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));min-width:700px;border-bottom:1px solid var(--border)}
-  .day-col{border-right:1px solid var(--border)}
-  .day-col:last-child{border-right:none}
-  .day-header{padding:10px 4px 8px;text-align:center;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
-  .day-en{font-size:12px;color:var(--muted);font-weight:500}
-  .day-zh{font-size:14px;color:var(--sub);margin-top:1px;font-weight:500}
-  .day-date{font-size:16px;font-weight:700;margin-top:2px}
-  .day-count{font-size:12px;color:var(--muted);margin-top:3px;min-height:15px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
-  .slots{display:flex;flex-direction:column}
-  .period-label{padding:7px 6px 4px;background:var(--bg);border-bottom:1px solid var(--border)}
-  .period-zh{font-size:13px;color:var(--sub);font-weight:600}
-  .period-en{font-size:11px;color:var(--muted);margin-top:1px}
+  table{border-collapse:collapse;width:100%;min-width:680px}
+  thead th{background:var(--card);border:1px solid var(--border);padding:10px 6px;text-align:center;position:sticky;top:0;z-index:10}
+  thead th.time-col{width:80px;min-width:80px;background:var(--card)}
+  .th-zh{font-size:14px;font-weight:600;color:var(--text)}
+  .th-en{font-size:11px;color:var(--muted);margin-top:1px}
+  .th-date{font-size:16px;font-weight:700;margin-top:2px}
+  .th-count{font-size:11px;color:var(--muted);margin-top:2px;min-height:14px}
 
-  .slot{border-bottom:1px solid var(--border);height:56px;position:relative;cursor:pointer;background:var(--card);transition:background 0.12s;-webkit-user-select:none;user-select:none;overflow:hidden}
-  .slot:active{background:var(--accent-bg)}
-  .slot.taken{background:var(--taken)}
-  .slot-time{position:absolute;bottom:5px;right:7px;font-size:16px;font-weight:700;color:var(--border);line-height:1;pointer-events:none;white-space:nowrap;letter-spacing:-0.5px}
-  .slot.taken .slot-time{color:var(--taken-border, #98d3aa)}
-  .slot-names{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:6px 8px;gap:2px}
-  .slot-name-row{display:flex;align-items:center;gap:4px}
-  .slot-name-text{font-size:13px;color:var(--taken-text);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .slot-add{position:absolute;bottom:6px;left:8px;font-size:11px;color:var(--muted)}
+  tr.period-row td{background:var(--period-bg);border:1px solid var(--border);padding:5px 8px;font-size:12px;font-weight:600;color:var(--sub)}
+  tr.period-row td.period-zh{font-size:13px;font-weight:700;color:var(--sub)}
+  tr.period-row td span{display:block;font-size:11px;color:var(--muted);font-weight:400}
+
+  tr.slot-row td{border:1px solid var(--border);height:54px;vertical-align:middle;padding:0}
+  td.time-cell{padding:0 8px;text-align:right;background:var(--card);position:sticky;left:0;z-index:1}
+  .time-zh{font-size:13px;font-weight:600;color:var(--sub)}
+  .time-en{font-size:11px;color:var(--muted);margin-top:1px}
+
+  td.slot-cell{cursor:pointer;background:var(--card);transition:background 0.1s;padding:6px 8px;vertical-align:middle}
+  td.slot-cell:active{background:var(--accent-bg)}
+  td.slot-cell.taken{background:var(--taken)}
+  .slot-add{font-size:12px;color:var(--muted)}
+  .slot-name-row{display:flex;align-items:center;gap:4px;margin-bottom:2px}
+  .slot-name-row:last-child{margin-bottom:0}
+  .slot-name-text{font-size:13px;font-weight:600;color:var(--taken-text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .remove-btn{flex-shrink:0;font-size:11px;color:#ef4444;cursor:pointer;padding:1px 5px;border-radius:4px;border:1px solid #ef4444;background:none;line-height:1.6;white-space:nowrap}
+  .remove-btn:active{opacity:0.7}
 
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
   .overlay.open{display:flex}
@@ -64,36 +68,33 @@
   @media(min-width:480px){.sheet{border-radius:20px;padding:28px}}
   .sheet-handle{width:40px;height:5px;background:var(--border);border-radius:3px;margin:0 auto 20px}
   @media(min-width:480px){.sheet-handle{display:none}}
-  .sheet-en{font-size:14px;color:var(--sub);margin-bottom:3px}
-  .sheet-zh{font-size:22px;font-weight:600;margin-bottom:6px}
-  .sheet-info{font-size:16px;color:var(--sub);margin-bottom:20px}
-  .sheet input{width:100%;padding:16px;border:2px solid var(--border);border-radius:var(--radius);font-size:18px;background:var(--card);color:var(--text);outline:none;transition:border-color 0.15s}
+  .sheet-en{font-size:13px;color:var(--sub);margin-bottom:2px}
+  .sheet-zh{font-size:20px;font-weight:600;margin-bottom:4px}
+  .sheet-info{font-size:15px;color:var(--sub);margin-bottom:18px}
+  .sheet input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:var(--radius);font-size:17px;background:var(--card);color:var(--text);outline:none;transition:border-color 0.15s}
   .sheet input::placeholder{color:var(--muted)}
   .sheet input:focus{border-color:var(--accent)}
-  .sheet-err{font-size:14px;color:#ef4444;min-height:20px;margin:8px 0 12px}
+  .sheet-err{font-size:13px;color:#ef4444;min-height:20px;margin:6px 0 10px}
   .sheet-btns{display:flex;gap:10px}
-  .btn{flex:1;padding:16px;border-radius:var(--radius);font-size:17px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--card);color:var(--text);transition:all 0.12s;line-height:1.3;text-align:center}
+  .btn{flex:1;padding:14px;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--card);color:var(--text);transition:all 0.12s;text-align:center}
   .btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
   .btn:active{transform:scale(0.98)}
-  .btn-sub{display:block;font-size:13px;opacity:0.6;margin-top:2px}
+  .btn-sub{display:block;font-size:12px;opacity:0.6;margin-top:2px}
 
   .who-section{padding:20px 16px}
-  .who-head{margin-bottom:12px}
-  .who-head-en{font-size:13px;color:var(--muted)}
-  .who-head-zh{font-size:18px;font-weight:600;color:var(--sub);margin-top:2px}
-  .who-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
-  .who-card-head{padding:12px 14px}
-  .who-card-en{font-size:13px;color:var(--muted)}
-  .who-card-zh{font-size:16px;font-weight:600;margin-top:1px}
-  .who-row{padding:10px 14px;border-top:1px solid var(--border);font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-  .who-time{color:var(--sub);font-size:13px;flex-shrink:0;line-height:1.5}
-  .who-names{color:var(--taken-text);font-weight:600;word-break:break-word;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-  .empty-who{font-size:15px;color:var(--muted);text-align:center;padding:28px 0}
-  .empty-zh{font-size:17px;color:var(--sub);margin-bottom:6px;font-weight:500}
+  .who-head-zh{font-size:17px;font-weight:600;color:var(--sub)}
+  .who-head-en{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .who-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+  .who-card-head{padding:10px 14px;border-bottom:1px solid var(--border)}
+  .who-card-zh{font-size:15px;font-weight:600}
+  .who-card-en{font-size:12px;color:var(--muted);margin-top:1px}
+  .who-row{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .who-row:last-child{border-bottom:none}
+  .who-time{font-size:12px;color:var(--sub);flex-shrink:0;line-height:1.5}
+  .who-names{color:var(--taken-text);font-weight:600;font-size:14px;text-align:right;word-break:break-word}
+  .empty-who{font-size:14px;color:var(--muted);text-align:center;padding:24px 0}
 
-  .remove-btn{flex-shrink:0;font-size:11px;color:#ef4444;cursor:pointer;padding:1px 5px;border-radius:4px;border:1px solid #ef4444;background:none;line-height:1.5;opacity:0.8;white-space:nowrap}
-  .remove-btn:active{opacity:1}
-  .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:14px 24px;border-radius:100px;font-size:15px;z-index:200;transition:transform 0.3s;pointer-events:none;white-space:nowrap}
+  .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:12px 24px;border-radius:100px;font-size:14px;z-index:200;transition:transform 0.3s;pointer-events:none;white-space:nowrap}
   .toast.show{transform:translateX(-50%) translateY(0)}
 </style>
 </head>
@@ -102,8 +103,7 @@
 <header>
   <div class="header-en">Wake — Shift Sign-up</div>
   <div class="header-zh">守灵值班报名</div>
-  <div class="header-sub-zh">点击任何时段报名。每小时可多人同时值班。</div>
-  <div class="header-sub">Tap any slot to volunteer. Multiple people welcome per hour.</div>
+  <div class="header-subs">点击任何时段报名。每小时可多人同时值班。<br>Tap any slot to volunteer. Multiple people welcome per hour.</div>
 </header>
 
 <div class="sync-bar">
@@ -112,8 +112,11 @@
   <span class="refresh-btn" onclick="doLoad()">刷新 Refresh</span>
 </div>
 
-<div class="days-scroll">
-  <div class="days-grid" id="days-grid"></div>
+<div class="table-wrap">
+  <table id="main-table">
+    <thead><tr id="thead-row"><th class="time-col"></th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
 </div>
 
 <div class="who-section" id="who-section"></div>
@@ -136,40 +139,28 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const DB = 'https://peh-fam-default-rtdb.asia-southeast1.firebasedatabase.app/slots';
+const DB='https://peh-fam-default-rtdb.asia-southeast1.firebasedatabase.app/slots';
+const DAYS_EN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYS_ZH=['周日','周一','周二','周三','周四','周五','周六'];
+const MONTHS_EN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_ZH=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
-const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const DAYS_ZH = ['周日','周一','周二','周三','周四','周五','周六'];
-const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const MONTHS_ZH = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+// 5 wake days: 18–22 Sep 2026
+const WAKE_DATES=[18,19,20,21,22].map(d=>{const x=new Date(2026,8,d);x.setHours(0,0,0,0);return x;});
 
-// Each period: hours are real clock hours, storeDayOffset=1 means store under NEXT calendar day
-// Column for day D shows:
-//   Morning   6–11  → stored under day D
-//   Afternoon 12–17 → stored under day D
-//   Evening   18–23 → stored under day D
-//   Overnight  0–5  → stored under day D+1 (it IS the next calendar day)
-const PERIODS = [
-  {en:'Morning 6am–Noon',       zh:'早上 6时–12时',   hours:[6,7,8,9,10,11],          offset:0},
-  {en:'Afternoon Noon–6pm',     zh:'下午 12时–6时',   hours:[12,13,14,15,16,17],       offset:0},
-  {en:'Evening 6pm–Midnight',   zh:'晚上 6时–午夜',   hours:[18,19,20,21,22,23],       offset:0},
-  {en:'Overnight Midnight–6am', zh:'深夜 午夜–早上6时',hours:[0,1,2,3,4,5],            offset:1},
+// Hour order per column: 6am→midnight (same day), then 12am–5am (next calendar day)
+const PERIODS=[
+  {zh:'早上 6时–12时', en:'Morning 6am–Noon',       hours:[6,7,8,9,10,11],    offset:0},
+  {zh:'下午 12时–6时', en:'Afternoon Noon–6pm',      hours:[12,13,14,15,16,17],offset:0},
+  {zh:'晚上 6时–午夜', en:'Evening 6pm–Midnight',    hours:[18,19,20,21,22,23],offset:0},
+  {zh:'深夜 午夜–6时', en:'Overnight Midnight–6am',  hours:[0,1,2,3,4,5],      offset:1},
 ];
-
-// The 5 "wake days" — each column header shows this date
-// But overnight slots in column D are stored under D+1
-const WAKE_DATES = [18,19,20,21,22].map(day=>{
-  const d=new Date(2026,8,day); // Sep is month 8 (0-indexed)
-  d.setHours(0,0,0,0);
-  return d;
-});
 
 function dayKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
 function hEn(h){const ap=h<12?'am':'pm';const hh=h===0?12:h>12?h-12:h;return `${hh}${ap}`}
 function hZh(h){if(h===0)return '午夜12时';if(h===12)return '中午12时';return `${h<12?'上午':'下午'}${h>12?h-12:h}时`}
-// slotKey: always uses the actual calendar date the hour belongs to
-function slotKey(d, h){return `${dayKey(d)}_h${h}`}
+function slotKey(d,h){return `${dayKey(d)}_h${h}`}
 
 let data={};
 let pending=null;
@@ -179,30 +170,21 @@ async function doLoad(){
   try{
     const r=await fetch(`${DB}.json`);
     if(!r.ok) throw new Error(r.status);
-    const json=await r.json();
-    data=json||{};
+    data=await r.json()||{};
     setSyncState('ok','实时同步 Live');
     render();
-  }catch(e){
-    setSyncState('err','连接失败，点击刷新 — tap Refresh');
-    console.error(e);
-  }
+  }catch(e){setSyncState('err','连接失败 — 点击刷新 Tap Refresh');console.error(e);}
 }
 
-async function doSave(sk, names){
-  setSyncState('loading','保存中 Saving…');
+async function doSave(sk,names){
   try{
-    const r=await fetch(`${DB}/${sk}.json`,{
-      method: names.length?'PUT':'DELETE',
+    await fetch(`${DB}/${sk}.json`,{
+      method:names.length?'PUT':'DELETE',
       headers:{'Content-Type':'application/json'},
-      body: names.length?JSON.stringify(names):undefined
+      body:names.length?JSON.stringify(names):undefined
     });
-    if(!r.ok) throw new Error(r.status);
     setSyncState('ok','已保存 Saved');
-  }catch(e){
-    setSyncState('err','保存失败 Save failed');
-    console.error(e);
-  }
+  }catch(e){setSyncState('err','保存失败 Save failed');console.error(e);}
 }
 
 function setSyncState(state,label){
@@ -210,84 +192,100 @@ function setSyncState(state,label){
   document.getElementById('sync-label').textContent=label;
 }
 
-function render(){renderGrid();renderWho();}
+function render(){
+  renderTable();
+  renderWho();
+}
 
-function renderGrid(){
-  const grid=document.getElementById('days-grid');
-  grid.innerHTML='';
-  WAKE_DATES.forEach((wakeDay, di)=>{
-    const col=document.createElement('div');
-    col.className='day-col';
-    // Count all slots for this column (morning/afternoon/evening under wakeDay, overnight under wakeDay+1)
+function renderTable(){
+  // Header row
+  const thead=document.getElementById('thead-row');
+  thead.innerHTML='<th class="time-col" style="border:1px solid var(--border)"></th>';
+  WAKE_DATES.forEach(wd=>{
     let count=0;
     PERIODS.forEach(p=>{
-      const storeDay = p.offset===1 ? addDays(wakeDay,1) : wakeDay;
-      p.hours.forEach(h=>{
-        const sk=slotKey(storeDay,h);
-        const n=data[sk];
-        if(Array.isArray(n)) count+=n.length;
-      });
+      const sd=p.offset?addDays(wd,1):wd;
+      p.hours.forEach(h=>{const n=data[slotKey(sd,h)];if(Array.isArray(n))count+=n.length;});
     });
-    col.innerHTML=`
-      <div class="day-header">
-        <div class="day-zh">${DAYS_ZH[wakeDay.getDay()]}</div>
-        <div class="day-en">${DAYS_EN[wakeDay.getDay()]}</div>
-        <div class="day-date">${wakeDay.getDate()} ${MONTHS_EN[wakeDay.getMonth()]}</div>
-        <div class="day-count">${count?count+'人':''}</div>
-      </div>
-      <div class="slots" id="slots-${di}"></div>`;
-    grid.appendChild(col);
+    const th=document.createElement('th');
+    th.innerHTML=`<div class="th-zh">${DAYS_ZH[wd.getDay()]}</div><div class="th-en">${DAYS_EN[wd.getDay()]}</div><div class="th-date">${wd.getDate()} ${MONTHS_EN[wd.getMonth()]}</div><div class="th-count">${count?count+'人':''}</div>`;
+    thead.appendChild(th);
+  });
 
-    const slotsEl=col.querySelector(`#slots-${di}`);
-    PERIODS.forEach(p=>{
-      const storeDay = p.offset===1 ? addDays(wakeDay,1) : wakeDay;
-      const pl=document.createElement('div');
-      pl.className='period-label';
-      pl.innerHTML=`<div class="period-zh">${p.zh}</div><div class="period-en">${p.en}</div>`;
-      slotsEl.appendChild(pl);
-      p.hours.forEach(h=>{
-        const sk=slotKey(storeDay,h);
+  // Body
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+
+  PERIODS.forEach(p=>{
+    // Period header row
+    const pr=document.createElement('tr');
+    pr.className='period-row';
+    const ptd=document.createElement('td');
+    ptd.colSpan=6;
+    ptd.innerHTML=`<span class="period-zh">${p.zh}</span><span>${p.en}</span>`;
+    pr.appendChild(ptd);
+    tbody.appendChild(pr);
+
+    // One row per hour
+    p.hours.forEach(h=>{
+      const tr=document.createElement('tr');
+      tr.className='slot-row';
+
+      // Time cell
+      const tc=document.createElement('td');
+      tc.className='time-cell';
+      tc.innerHTML=`<div class="time-zh">${hZh(h)}</div><div class="time-en">${hEn(h)}–${hEn(h===23?0:h+1)}</div>`;
+      tr.appendChild(tc);
+
+      // One slot cell per day
+      WAKE_DATES.forEach((wd,di)=>{
+        const sd=p.offset?addDays(wd,1):wd;
+        const sk=slotKey(sd,h);
         const names=Array.isArray(data[sk])?data[sk]:[];
-        const el=document.createElement('div');
-        el.className='slot'+(names.length?' taken':'');
-        const nameRows=names.map(n=>`<div class="slot-name-row"><span class="slot-name-text">${n}</span><button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕</button></div>`).join('');
-        el.innerHTML=`<div class="slot-time">${hEn(h)}</div>${names.length?`<div class="slot-names">${nameRows}</div>`:'<div class="slot-add">＋报名</div>'}`;
-        el.onclick=(()=>{const _sk=sk;const _sd=storeDay;const _h=h;const _wd=wakeDay;return()=>openModal(_wd,_sd,_h,_sk);})();
-        slotsEl.appendChild(el);
+        const td=document.createElement('td');
+        td.className='slot-cell'+(names.length?' taken':'');
+        if(names.length){
+          td.innerHTML=names.map(n=>`<div class="slot-name-row"><span class="slot-name-text">${n}</span><button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕</button></div>`).join('');
+        } else {
+          td.innerHTML='<div class="slot-add">＋报名</div>';
+        }
+        td.onclick=(e)=>{if(e.target.classList.contains('remove-btn'))return;openModal(wd,sd,h,sk);};
+        tr.appendChild(td);
       });
+
+      tbody.appendChild(tr);
     });
   });
 }
 
 function renderWho(){
   const sec=document.getElementById('who-section');
-  let html=`<div class="who-head"><div class="who-head-zh">所有值班人员</div><div class="who-head-en">All volunteers</div></div>`;
+  let html=`<div class="who-head-zh">所有值班人员</div><div class="who-head-en">All volunteers</div>`;
   let any=false;
-  WAKE_DATES.forEach((wakeDay)=>{
+  WAKE_DATES.forEach(wd=>{
     const rows=[];
     PERIODS.forEach(p=>{
-      const storeDay = p.offset===1 ? addDays(wakeDay,1) : wakeDay;
+      const sd=p.offset?addDays(wd,1):wd;
       p.hours.forEach(h=>{
-        const sk=slotKey(storeDay,h);
+        const sk=slotKey(sd,h);
         const names=Array.isArray(data[sk])?data[sk]:[];
         if(names.length){
-          const nameTags=names.map(n=>`<span style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="flex:1">${n}</span><button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕</button></span>`).join('');
-          rows.push(`<div class="who-row"><span class="who-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</span><span class="who-names">${nameTags}</span></div>`);
+          rows.push(`<div class="who-row"><span class="who-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</span><span class="who-names">${names.join(', ')}</span></div>`);
         }
       });
     });
     if(rows.length){
       any=true;
-      html+=`<div class="who-card"><div class="who-card-head"><div class="who-card-zh">${DAYS_ZH[wakeDay.getDay()]} ${wakeDay.getDate()}${MONTHS_ZH[wakeDay.getMonth()]}</div><div class="who-card-en">${DAYS_EN[wakeDay.getDay()]}, ${wakeDay.getDate()} ${MONTHS_EN[wakeDay.getMonth()]}</div></div>${rows.join('')}</div>`;
+      html+=`<div class="who-card"><div class="who-card-head"><div class="who-card-zh">${DAYS_ZH[wd.getDay()]} ${wd.getDate()}${MONTHS_ZH[wd.getMonth()]}</div><div class="who-card-en">${DAYS_EN[wd.getDay()]}, ${wd.getDate()} ${MONTHS_EN[wd.getMonth()]}</div></div>${rows.join('')}</div>`;
     }
   });
-  if(!any) html+=`<div class="empty-who"><div class="empty-zh">暂无报名</div>No volunteers yet — be the first.</div>`;
+  if(!any) html+='<div class="empty-who">暂无报名 — No volunteers yet.</div>';
   sec.innerHTML=html;
 }
 
-function openModal(wakeDay, storeDay, h, sk){
+function openModal(wd,sd,h,sk){
   pending={sk};
-  document.getElementById('m-title').textContent=`${DAYS_ZH[wakeDay.getDay()]} ${wakeDay.getDate()}${MONTHS_ZH[wakeDay.getMonth()]}`;
+  document.getElementById('m-title').textContent=`${DAYS_ZH[wd.getDay()]} ${wd.getDate()}${MONTHS_ZH[wd.getMonth()]}`;
   document.getElementById('m-info').textContent=`${hZh(h)}　${hEn(h)} – ${hEn(h===23?0:h+1)}`;
   document.getElementById('m-name').value='';
   document.getElementById('m-err').textContent='';
@@ -313,11 +311,10 @@ async function submit(){
 
 async function removeName(e,sk,name){
   e.stopPropagation();
-  const names=Array.isArray(data[sk])?data[sk]:[];
-  const updated=names.filter(n=>n!==name);
-  data[sk]=updated;
+  const names=(Array.isArray(data[sk])?data[sk]:[]).filter(n=>n!==name);
+  data[sk]=names;
   render();
-  await doSave(sk,updated);
+  await doSave(sk,names);
   showToast('已删除 Removed');
   await doLoad();
 }
