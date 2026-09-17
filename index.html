@@ -47,15 +47,15 @@
   .period-zh{font-size:13px;color:var(--sub);font-weight:600}
   .period-en{font-size:11px;color:var(--muted);margin-top:1px}
 
-  .slot{border-bottom:1px solid var(--border);min-height:56px;display:flex;flex-direction:column;justify-content:center;padding:8px 8px;cursor:pointer;background:var(--card);transition:background 0.12s;-webkit-user-select:none;user-select:none}
+  .slot{border-bottom:1px solid var(--border);height:56px;position:relative;cursor:pointer;background:var(--card);transition:background 0.12s;-webkit-user-select:none;user-select:none;overflow:hidden}
   .slot:active{background:var(--accent-bg)}
   .slot.taken{background:var(--taken)}
-  .slot-time{font-size:12px;color:var(--muted);line-height:1.4;font-weight:500;white-space:nowrap}
-  .slot-names{margin-top:4px}
-  .slot-name-row{display:flex;align-items:center;gap:4px;margin-top:2px}
-  .slot-name-row:first-child{margin-top:0}
-  .slot-name-text{font-size:12px;color:var(--taken-text);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .slot-add{font-size:11px;color:var(--muted);margin-top:2px}
+  .slot-time{position:absolute;bottom:5px;right:7px;font-size:16px;font-weight:700;color:var(--border);line-height:1;pointer-events:none;white-space:nowrap;letter-spacing:-0.5px}
+  .slot.taken .slot-time{color:var(--taken-border, #98d3aa)}
+  .slot-names{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:6px 8px;gap:2px}
+  .slot-name-row{display:flex;align-items:center;gap:4px}
+  .slot-name-text{font-size:13px;color:var(--taken-text);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .slot-add{position:absolute;bottom:6px;left:8px;font-size:11px;color:var(--muted)}
 
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
   .overlay.open{display:flex}
@@ -250,8 +250,8 @@ function renderGrid(){
         const names=Array.isArray(data[sk])?data[sk]:[];
         const el=document.createElement('div');
         el.className='slot'+(names.length?' taken':'');
-        const nameTags=names.map(n=>`<div class="slot-name-row"><span class="slot-name-text">${n}</span><button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕ 删除</button></div>`).join('');
-        el.innerHTML=`<div class="slot-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</div>${names.length?`<div class="slot-names">${nameTags}</div>`:'<div class="slot-add">＋报名</div>'}`;
+        const nameRows=names.map(n=>`<div class="slot-name-row"><span class="slot-name-text">${n}</span><button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕</button></div>`).join('');
+        el.innerHTML=`<div class="slot-time">${hEn(h)}</div>${names.length?`<div class="slot-names">${nameRows}</div>`:'<div class="slot-add">＋报名</div>'}`;
         el.onclick=(()=>{const _sk=sk;const _sd=storeDay;const _h=h;const _wd=wakeDay;return()=>openModal(_wd,_sd,_h,_sk);})();
         slotsEl.appendChild(el);
       });
