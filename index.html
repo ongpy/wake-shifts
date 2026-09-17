@@ -51,7 +51,10 @@
   .slot:active{background:var(--accent-bg)}
   .slot.taken{background:var(--taken)}
   .slot-time{font-size:13px;color:var(--muted);line-height:1.5;font-weight:500}
-  .slot-names{font-size:13px;color:var(--taken-text);margin-top:3px;line-height:1.6;word-break:break-word;font-weight:500}
+  .slot-names{font-size:13px;color:var(--taken-text);margin-top:4px;font-weight:500}
+  .slot-name-row{display:flex;align-items:center;justify-content:space-between;gap:6px;line-height:1.4;margin-top:3px}
+  .slot-name-row:first-child{margin-top:0}
+  .slot-name-text{flex:1;word-break:break-word}
   .slot-add{font-size:12px;color:var(--muted);margin-top:2px}
 
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
@@ -84,7 +87,7 @@
   .who-card-zh{font-size:16px;font-weight:600;margin-top:1px}
   .who-row{padding:10px 14px;border-top:1px solid var(--border);font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:10px}
   .who-time{color:var(--sub);font-size:13px;flex-shrink:0;line-height:1.5}
-  .who-names{color:var(--taken-text);font-weight:600;text-align:right;word-break:break-word}
+  .who-names{color:var(--taken-text);font-weight:600;word-break:break-word;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
   .empty-who{font-size:15px;color:var(--muted);text-align:center;padding:28px 0}
   .empty-zh{font-size:17px;color:var(--sub);margin-bottom:6px;font-weight:500}
 
@@ -247,7 +250,7 @@ function renderGrid(){
         const names=Array.isArray(data[sk])?data[sk]:[];
         const el=document.createElement('div');
         el.className='slot'+(names.length?' taken':'');
-        const nameTags=names.map(n=>`<span>${n} <button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕ 删除</button></span>`).join(' ');
+        const nameTags=names.map(n=>`<div class="slot-name-row"><span class="slot-name-text">${n}</span><button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕ 删除</button></div>`).join('');
         el.innerHTML=`<div class="slot-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</div>${names.length?`<div class="slot-names">${nameTags}</div>`:'<div class="slot-add">＋报名</div>'}`;
         el.onclick=(()=>{const _sk=sk;const _sd=storeDay;const _h=h;const _wd=wakeDay;return()=>openModal(_wd,_sd,_h,_sk);})();
         slotsEl.appendChild(el);
@@ -268,7 +271,7 @@ function renderWho(){
         const sk=slotKey(storeDay,h);
         const names=Array.isArray(data[sk])?data[sk]:[];
         if(names.length){
-          const nameTags=names.map(n=>`<span>${n} <button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕</button></span>`).join(' ');
+          const nameTags=names.map(n=>`<span style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="flex:1">${n}</span><button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕</button></span>`).join('');
           rows.push(`<div class="who-row"><span class="who-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</span><span class="who-names">${nameTags}</span></div>`);
         }
       });
