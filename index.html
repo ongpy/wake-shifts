@@ -88,6 +88,8 @@
   .empty-who{font-size:13px;color:var(--muted);text-align:center;padding:24px 0}
   .empty-zh{font-size:14px;color:var(--sub);margin-bottom:4px}
 
+  .remove-btn{display:inline-block;margin-top:3px;font-size:10px;color:#ef4444;cursor:pointer;padding:1px 6px;border-radius:4px;border:1px solid #ef4444;background:none;line-height:1.6;opacity:0.75}
+  .remove-btn:active{opacity:1}
   .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:100px;font-size:13px;z-index:200;transition:transform 0.3s;pointer-events:none;white-space:nowrap}
   .toast.show{transform:translateX(-50%) translateY(0)}
 </style>
@@ -138,11 +140,11 @@ const DAYS_ZH = ['周日','周一','周二','周三','周四','周五','周六']
 const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_ZH = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 const PERIODS = [
-  {en:'Midnight – 6am', zh:'午夜至早上6时', start:0,  end:6},
-  {en:'6am – Noon',     zh:'早上6时至中午', start:6,  end:12},
-  {en:'Noon – 6pm',     zh:'中午至傍晚6时', start:12, end:18},
   {en:'6pm – Midnight', zh:'傍晚6时至午夜', start:18, end:24},
+  {en:'Midnight – 6am', zh:'午夜至早上6时', start:0,  end:6},
+  {en:'6am – 10am',     zh:'早上6时至10时', start:6,  end:10},
 ];
+const HOUR_ORDER = [18,19,20,21,22,23,0,1,2,3,4,5,6,7,8,9];
 
 function dayKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function hEn(h){const ap=h<12?'am':'pm';const hh=h===0?12:h>12?h-12:h;return `${hh}${ap}`}
@@ -200,7 +202,7 @@ function renderGrid(){
     const dk=dayKey(d);
     const col=document.createElement('div');
     col.className='day-col';
-    const count=Object.entries(data).filter(([k])=>k.startsWith(dk)).reduce((s,[,v])=>s+(Array.isArray(v)?v.length:0),0);
+    const count=HOUR_ORDER.reduce((s,h)=>{const v=data[slotKey(dk,h)];return s+(Array.isArray(v)?v.length:0);},0);
     col.innerHTML=`
       <div class="day-header">
         <div class="day-zh">${DAYS_ZH[d.getDay()]}</div>
@@ -211,18 +213,23 @@ function renderGrid(){
       <div class="slots" id="slots-${dk}"></div>`;
     grid.appendChild(col);
     const slotsEl=col.querySelector(`#slots-${dk}`);
+    const dIdx=dates.findIndex(x=>dayKey(x)===dk);
+    const nextDk=dIdx<dates.length-1?dayKey(dates[dIdx+1]):null;
     PERIODS.forEach(p=>{
       const pl=document.createElement('div');
       pl.className='period-label';
       pl.innerHTML=`<div class="period-zh">${p.zh}</div><div class="period-en">${p.en}</div>`;
       slotsEl.appendChild(pl);
       for(let h=p.start;h<p.end;h++){
-        const sk=slotKey(dk,h);
+        const isOvernight=(h<10);
+        const keyDk=isOvernight?(nextDk||dk):dk;
+        const sk=slotKey(keyDk,h);
         const names=Array.isArray(data[sk])?data[sk]:[];
         const el=document.createElement('div');
         el.className='slot'+(names.length?' taken':'');
-        el.innerHTML=`<div class="slot-time">${hZh(h)}<br>${hEn(h)}–${hEn(h+1)}</div>${names.length?`<div class="slot-names">${names.join(', ')}</div>`:'<div class="slot-add">＋报名</div>'}`;
-        el.onclick=()=>openModal(dk,h);
+        const nameTags=names.map(n=>`<span>${n} <button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕ 删除</button></span>`).join(' ');
+        el.innerHTML=`<div class="slot-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</div>${names.length?`<div class="slot-names">${nameTags}</div>`:'<div class="slot-add">＋报名</div>'}`;
+        el.onclick=(()=>{const _sk=sk;const _dk=keyDk;const _h=h;return()=>openModal(_dk,_h,_sk);})();
         slotsEl.appendChild(el);
       }
     });
@@ -233,15 +240,20 @@ function renderWho(){
   const sec=document.getElementById('who-section');
   let html=`<div class="who-head"><div class="who-head-zh">所有值班人员</div><div class="who-head-en">All volunteers</div></div>`;
   let any=false;
-  dates.forEach(d=>{
+  dates.forEach((d,dIdx)=>{
     const dk=dayKey(d);
+    const nextDk=dIdx<dates.length-1?dayKey(dates[dIdx+1]):null;
     const rows=[];
-    for(let h=0;h<24;h++){
-      const names=Array.isArray(data[slotKey(dk,h)])?data[slotKey(dk,h)]:[];
+    HOUR_ORDER.forEach(h=>{
+      const isOvernight=(h<10);
+      const keyDk=isOvernight?(nextDk||dk):dk;
+      const sk2=slotKey(keyDk,h);
+      const names=Array.isArray(data[sk2])?data[sk2]:[];
       if(names.length){
-        rows.push(`<div class="who-row"><span class="who-time">${hZh(h)}<br>${hEn(h)}–${hEn(h+1)}</span><span class="who-names">${names.join(', ')}</span></div>`);
+        const nameTags2=names.map(n=>`<span>${n} <button class="remove-btn" onclick="removeName(event,'${sk2}','${n.replace(/'/g,"\\'")}')">✕</button></span>`).join(' ');
+        rows.push(`<div class="who-row"><span class="who-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</span><span class="who-names">${nameTags2}</span></div>`);
       }
-    }
+    });
     if(rows.length){
       any=true;
       html+=`<div class="who-card"><div class="who-card-head"><div class="who-card-zh">${DAYS_ZH[d.getDay()]} ${d.getDate()}${MONTHS_ZH[d.getMonth()]}</div><div class="who-card-en">${DAYS_EN[d.getDay()]}, ${d.getDate()} ${MONTHS_EN[d.getMonth()]}</div></div>${rows.join('')}</div>`;
@@ -251,11 +263,11 @@ function renderWho(){
   sec.innerHTML=html;
 }
 
-function openModal(dk,h){
-  pending={dk,h};
-  const d=dates.find(x=>dayKey(x)===dk);
+function openModal(dk,h,sk){
+  pending={dk,h,sk:sk||slotKey(dk,h)};
+  const d=dates.find(x=>dayKey(x)===dk)||dates[0];
   document.getElementById('m-title').textContent=`${DAYS_ZH[d.getDay()]} ${d.getDate()}${MONTHS_ZH[d.getMonth()]}`;
-  document.getElementById('m-info').textContent=`${hZh(h)}　${hEn(h)} – ${hEn(h+1)}`;
+  document.getElementById('m-info').textContent=`${hZh(h)}　${hEn(h)} – ${hEn(h===23?0:h+1)}`;
   document.getElementById('m-name').value='';
   document.getElementById('m-err').textContent='';
   document.getElementById('overlay').classList.add('open');
@@ -266,7 +278,7 @@ function closeModal(){document.getElementById('overlay').classList.remove('open'
 async function submit(){
   const name=document.getElementById('m-name').value.trim();
   if(!name){document.getElementById('m-err').textContent='请输入名字 / Enter your name.';return;}
-  const sk=slotKey(pending.dk,pending.h);
+  const sk=pending.sk||slotKey(pending.dk,pending.h);
   const names=Array.isArray(data[sk])?[...data[sk]]:[];
   if(names.includes(name)){document.getElementById('m-err').textContent='你已报名 / Already signed up.';return;}
   names.push(name);
@@ -275,6 +287,26 @@ async function submit(){
   render();
   await doSave(sk,names);
   await doLoad();
+}
+
+async function removeName(e,sk,name){
+  e.stopPropagation();
+  const names=Array.isArray(data[sk])?data[sk]:[];
+  const updated=names.filter(n=>n!==name);
+  data[sk]=updated;
+  render();
+  setSyncState('loading','保存中 Saving…');
+  try{
+    const r=await fetch(`${DB}/${sk}.json`,{
+      method: updated.length?'PUT':'DELETE',
+      headers:{'Content-Type':'application/json'},
+      body: updated.length?JSON.stringify(updated):undefined
+    });
+    if(!r.ok) throw new Error();
+    setSyncState('ok','已删除 Removed');
+    showToast('已删除 Removed');
+    await doLoad();
+  }catch{setSyncState('err','删除失败 Remove failed');}
 }
 
 function showToast(msg){
