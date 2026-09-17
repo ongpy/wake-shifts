@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>守灵值班报名</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#f7f6f4;--card:#ffffff;--border:#e4e2de;
+    --text:#1a1916;--sub:#6b6960;--muted:#a09e97;
+    --taken:#d4edda;--taken-text:#1a6335;
+    --accent:#2563eb;--accent-bg:#eff6ff;--radius:10px;
+  }
+  @media(prefers-color-scheme:dark){:root{
+    --bg:#141412;--card:#1e1d1b;--border:#2e2d2a;
+    --text:#f0ede8;--sub:#8a8880;--muted:#5a5855;
+    --taken:#0f2e1a;--taken-text:#6ee09a;
+    --accent:#60a5fa;--accent-bg:#1e3a5f;
+  }}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB',sans-serif;font-size:15px;min-height:100dvh}
+
+  header{padding:18px 16px 12px;border-bottom:1px solid var(--border);background:var(--card)}
+  .header-en{font-size:12px;font-weight:500;color:var(--sub)}
+  .header-zh{font-size:20px;font-weight:600;letter-spacing:-0.3px;margin:2px 0 4px}
+  .header-sub{font-size:12px;color:var(--sub)}
+  .header-sub-zh{font-size:12px;color:var(--sub);margin-top:1px}
+
+  .sync-bar{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:7px 16px;background:var(--card);border-bottom:1px solid var(--border)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background 0.3s}
+  .dot.ok{background:#22c55e}.dot.err{background:#ef4444}.dot.loading{background:#f59e0b;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  .refresh-btn{margin-left:auto;cursor:pointer;font-size:12px;color:var(--accent)}
+
+  .days-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .days-grid{display:grid;grid-template-columns:repeat(5,1fr);min-width:560px;border-bottom:1px solid var(--border)}
+  .day-col{border-right:1px solid var(--border)}
+  .day-col:last-child{border-right:none}
+  .day-header{padding:8px 4px 6px;text-align:center;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+  .day-en{font-size:10px;color:var(--muted);font-weight:500}
+  .day-zh{font-size:11px;color:var(--sub);margin-top:1px}
+  .day-date{font-size:14px;font-weight:600;margin-top:1px}
+  .day-count{font-size:10px;color:var(--muted);margin-top:2px;min-height:13px}
+
+  .slots{display:flex;flex-direction:column}
+  .period-label{padding:5px 4px 3px;background:var(--bg);border-bottom:1px solid var(--border)}
+  .period-zh{font-size:10px;color:var(--sub);font-weight:500}
+  .period-en{font-size:9px;color:var(--muted)}
+
+  .slot{border-bottom:1px solid var(--border);min-height:44px;display:flex;flex-direction:column;justify-content:center;padding:5px 5px;cursor:pointer;background:var(--card);transition:background 0.12s;-webkit-user-select:none;user-select:none}
+  .slot:active{background:var(--accent-bg)}
+  .slot.taken{background:var(--taken)}
+  .slot-time{font-size:10px;color:var(--muted);line-height:1.4}
+  .slot-names{font-size:10px;color:var(--taken-text);margin-top:2px;line-height:1.4;word-break:break-word}
+  .slot-add{font-size:9px;color:var(--muted);margin-top:1px}
+
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
+  .overlay.open{display:flex}
+  @media(min-width:480px){.overlay{align-items:center}}
+  .sheet{background:var(--card);border-radius:16px 16px 0 0;padding:20px 20px 36px;width:100%;max-width:440px}
+  @media(min-width:480px){.sheet{border-radius:16px;padding:24px}}
+  .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+  @media(min-width:480px){.sheet-handle{display:none}}
+  .sheet-en{font-size:12px;color:var(--sub);margin-bottom:2px}
+  .sheet-zh{font-size:17px;font-weight:600;margin-bottom:4px}
+  .sheet-info{font-size:13px;color:var(--sub);margin-bottom:16px}
+  .sheet input{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--card);color:var(--text);outline:none;transition:border-color 0.15s}
+  .sheet input::placeholder{color:var(--muted)}
+  .sheet input:focus{border-color:var(--accent)}
+  .sheet-err{font-size:12px;color:#ef4444;min-height:18px;margin:6px 0 10px}
+  .sheet-btns{display:flex;gap:8px}
+  .btn{flex:1;padding:13px;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--text);transition:all 0.12s;line-height:1.3;text-align:center}
+  .btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .btn:active{transform:scale(0.98)}
+  .btn-sub{display:block;font-size:11px;opacity:0.6;margin-top:1px}
+
+  .who-section{padding:16px}
+  .who-head{margin-bottom:10px}
+  .who-head-en{font-size:11px;color:var(--muted)}
+  .who-head-zh{font-size:14px;font-weight:600;color:var(--sub);margin-top:1px}
+  .who-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+  .who-card-head{padding:9px 12px}
+  .who-card-en{font-size:11px;color:var(--muted)}
+  .who-card-zh{font-size:13px;font-weight:600}
+  .who-row{padding:7px 12px;border-top:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .who-time{color:var(--sub);font-size:11px;flex-shrink:0;line-height:1.4}
+  .who-names{color:var(--taken-text);font-weight:500;text-align:right;word-break:break-word}
+  .empty-who{font-size:13px;color:var(--muted);text-align:center;padding:24px 0}
+  .empty-zh{font-size:14px;color:var(--sub);margin-bottom:4px}
+
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:100px;font-size:13px;z-index:200;transition:transform 0.3s;pointer-events:none;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-en">Wake — Shift Sign-up</div>
+  <div class="header-zh">守灵值班报名</div>
+  <div class="header-sub-zh">点击任何时段报名。每小时可多人同时值班。</div>
+  <div class="header-sub">Tap any slot to volunteer. Multiple people welcome per hour.</div>
+</header>
+
+<div class="sync-bar">
+  <div class="dot loading" id="dot"></div>
+  <span id="sync-label">连接中 Connecting…</span>
+  <span class="refresh-btn" onclick="doLoad()">刷新 Refresh</span>
+</div>
+
+<div class="days-scroll">
+  <div class="days-grid" id="days-grid"></div>
+</div>
+
+<div class="who-section" id="who-section"></div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-en">Sign up for shift</div>
+    <div class="sheet-zh" id="m-title">报名值班</div>
+    <p class="sheet-info" id="m-info"></p>
+    <input type="text" id="m-name" placeholder="你的名字 / Your name" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <div class="sheet-err" id="m-err"></div>
+    <div class="sheet-btns">
+      <button class="btn" onclick="closeModal()">取消<span class="btn-sub">Cancel</span></button>
+      <button class="btn btn-primary" onclick="submit()">报名<span class="btn-sub">Sign up</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB = 'https://peh-fam-default-rtdb.asia-southeast1.firebasedatabase.app/slots';
+
+const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYS_ZH = ['周日','周一','周二','周三','周四','周五','周六'];
+const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_ZH = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const PERIODS = [
+  {en:'Midnight – 6am', zh:'午夜至早上6时', start:0,  end:6},
+  {en:'6am – Noon',     zh:'早上6时至中午', start:6,  end:12},
+  {en:'Noon – 6pm',     zh:'中午至傍晚6时', start:12, end:18},
+  {en:'6pm – Midnight', zh:'傍晚6时至午夜', start:18, end:24},
+];
+
+function dayKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function hEn(h){const ap=h<12?'am':'pm';const hh=h===0?12:h>12?h-12:h;return `${hh}${ap}`}
+function hZh(h){if(h===0)return '午夜12时';if(h===12)return '中午12时';return `${h<12?'上午':'下午'}${h>12?h-12:h}时`}
+function slotKey(dk,h){return `${dk}_h${h}`}
+
+const today=new Date(); today.setHours(0,0,0,0);
+const dates=Array.from({length:5},(_,i)=>{const d=new Date(today);d.setDate(today.getDate()+i);return d});
+
+let data={};
+let pending=null;
+
+async function doLoad(){
+  setSyncState('loading','连接中 Connecting…');
+  try{
+    const r=await fetch(`${DB}.json`);
+    if(!r.ok) throw new Error(r.status);
+    const json=await r.json();
+    data=json||{};
+    setSyncState('ok','实时同步 Live');
+    render();
+  }catch(e){
+    setSyncState('err','连接失败，点击刷新 — tap Refresh');
+    console.error(e);
+  }
+}
+
+async function doSave(sk,names){
+  try{
+    const r=await fetch(`${DB}/${sk}.json`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(names)
+    });
+    if(!r.ok) throw new Error(r.status);
+    setSyncState('ok','已保存 Saved');
+    showToast('报名成功 Signed up!');
+  }catch(e){
+    setSyncState('err','保存失败 Save failed');
+    console.error(e);
+  }
+}
+
+function setSyncState(state,label){
+  document.getElementById('dot').className='dot '+state;
+  document.getElementById('sync-label').textContent=label;
+}
+
+function render(){renderGrid();renderWho();}
+
+function renderGrid(){
+  const grid=document.getElementById('days-grid');
+  grid.innerHTML='';
+  dates.forEach(d=>{
+    const dk=dayKey(d);
+    const col=document.createElement('div');
+    col.className='day-col';
+    const count=Object.entries(data).filter(([k])=>k.startsWith(dk)).reduce((s,[,v])=>s+(Array.isArray(v)?v.length:0),0);
+    col.innerHTML=`
+      <div class="day-header">
+        <div class="day-zh">${DAYS_ZH[d.getDay()]}</div>
+        <div class="day-en">${DAYS_EN[d.getDay()]}</div>
+        <div class="day-date">${d.getDate()} ${MONTHS_EN[d.getMonth()]}</div>
+        <div class="day-count">${count?count+'人':''}</div>
+      </div>
+      <div class="slots" id="slots-${dk}"></div>`;
+    grid.appendChild(col);
+    const slotsEl=col.querySelector(`#slots-${dk}`);
+    PERIODS.forEach(p=>{
+      const pl=document.createElement('div');
+      pl.className='period-label';
+      pl.innerHTML=`<div class="period-zh">${p.zh}</div><div class="period-en">${p.en}</div>`;
+      slotsEl.appendChild(pl);
+      for(let h=p.start;h<p.end;h++){
+        const sk=slotKey(dk,h);
+        const names=Array.isArray(data[sk])?data[sk]:[];
+        const el=document.createElement('div');
+        el.className='slot'+(names.length?' taken':'');
+        el.innerHTML=`<div class="slot-time">${hZh(h)}<br>${hEn(h)}–${hEn(h+1)}</div>${names.length?`<div class="slot-names">${names.join(', ')}</div>`:'<div class="slot-add">＋报名</div>'}`;
+        el.onclick=()=>openModal(dk,h);
+        slotsEl.appendChild(el);
+      }
+    });
+  });
+}
+
+function renderWho(){
+  const sec=document.getElementById('who-section');
+  let html=`<div class="who-head"><div class="who-head-zh">所有值班人员</div><div class="who-head-en">All volunteers</div></div>`;
+  let any=false;
+  dates.forEach(d=>{
+    const dk=dayKey(d);
+    const rows=[];
+    for(let h=0;h<24;h++){
+      const names=Array.isArray(data[slotKey(dk,h)])?data[slotKey(dk,h)]:[];
+      if(names.length){
+        rows.push(`<div class="who-row"><span class="who-time">${hZh(h)}<br>${hEn(h)}–${hEn(h+1)}</span><span class="who-names">${names.join(', ')}</span></div>`);
+      }
+    }
+    if(rows.length){
+      any=true;
+      html+=`<div class="who-card"><div class="who-card-head"><div class="who-card-zh">${DAYS_ZH[d.getDay()]} ${d.getDate()}${MONTHS_ZH[d.getMonth()]}</div><div class="who-card-en">${DAYS_EN[d.getDay()]}, ${d.getDate()} ${MONTHS_EN[d.getMonth()]}</div></div>${rows.join('')}</div>`;
+    }
+  });
+  if(!any) html+=`<div class="empty-who"><div class="empty-zh">暂无报名</div>No volunteers yet — be the first.</div>`;
+  sec.innerHTML=html;
+}
+
+function openModal(dk,h){
+  pending={dk,h};
+  const d=dates.find(x=>dayKey(x)===dk);
+  document.getElementById('m-title').textContent=`${DAYS_ZH[d.getDay()]} ${d.getDate()}${MONTHS_ZH[d.getMonth()]}`;
+  document.getElementById('m-info').textContent=`${hZh(h)}　${hEn(h)} – ${hEn(h+1)}`;
+  document.getElementById('m-name').value='';
+  document.getElementById('m-err').textContent='';
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('m-name').focus(),100);
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');pending=null;}
+
+async function submit(){
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){document.getElementById('m-err').textContent='请输入名字 / Enter your name.';return;}
+  const sk=slotKey(pending.dk,pending.h);
+  const names=Array.isArray(data[sk])?[...data[sk]]:[];
+  if(names.includes(name)){document.getElementById('m-err').textContent='你已报名 / Already signed up.';return;}
+  names.push(name);
+  data[sk]=names;
+  closeModal();
+  render();
+  await doSave(sk,names);
+  await doLoad();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay'))closeModal();});
+document.getElementById('m-name').addEventListener('keydown',e=>{if(e.key==='Enter')submit();if(e.key==='Escape')closeModal();});
+
+setInterval(doLoad,30000);
+doLoad();
+</script>
+</body>
+</html>
