@@ -64,7 +64,7 @@
   .sheet-en{font-size:14px;color:var(--sub);margin-bottom:3px}
   .sheet-zh{font-size:22px;font-weight:600;margin-bottom:6px}
   .sheet-info{font-size:16px;color:var(--sub);margin-bottom:20px}
-  .sheet input{width:100%;padding:16px 16px;border:2px solid var(--border);border-radius:var(--radius);font-size:18px;background:var(--card);color:var(--text);outline:none;transition:border-color 0.15s}
+  .sheet input{width:100%;padding:16px;border:2px solid var(--border);border-radius:var(--radius);font-size:18px;background:var(--card);color:var(--text);outline:none;transition:border-color 0.15s}
   .sheet input::placeholder{color:var(--muted)}
   .sheet input:focus{border-color:var(--accent)}
   .sheet-err{font-size:14px;color:#ef4444;min-height:20px;margin:8px 0 12px}
@@ -139,20 +139,34 @@ const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const DAYS_ZH = ['周日','周一','周二','周三','周四','周五','周六'];
 const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_ZH = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+// Each period: hours are real clock hours, storeDayOffset=1 means store under NEXT calendar day
+// Column for day D shows:
+//   Morning   6–11  → stored under day D
+//   Afternoon 12–17 → stored under day D
+//   Evening   18–23 → stored under day D
+//   Overnight  0–5  → stored under day D+1 (it IS the next calendar day)
 const PERIODS = [
-  {en:'6am – Noon',     zh:'早上6时至中午', start:6,  end:12},
-  {en:'Noon – 6pm',     zh:'中午至傍晚6时', start:12, end:18},
-  {en:'6pm – Midnight', zh:'傍晚6时至午夜', start:18, end:24},
-  {en:'Midnight – 6am', zh:'午夜至早上6时', start:0,  end:6},
+  {en:'Morning 6am–Noon',       zh:'早上 6时–12时',   hours:[6,7,8,9,10,11],          offset:0},
+  {en:'Afternoon Noon–6pm',     zh:'下午 12时–6时',   hours:[12,13,14,15,16,17],       offset:0},
+  {en:'Evening 6pm–Midnight',   zh:'晚上 6时–午夜',   hours:[18,19,20,21,22,23],       offset:0},
+  {en:'Overnight Midnight–6am', zh:'深夜 午夜–早上6时',hours:[0,1,2,3,4,5],            offset:1},
 ];
-const HOUR_ORDER = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5];
+
+// The 5 "wake days" — each column header shows this date
+// But overnight slots in column D are stored under D+1
+const WAKE_DATES = [18,19,20,21,22].map(day=>{
+  const d=new Date(2026,8,day); // Sep is month 8 (0-indexed)
+  d.setHours(0,0,0,0);
+  return d;
+});
 
 function dayKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
 function hEn(h){const ap=h<12?'am':'pm';const hh=h===0?12:h>12?h-12:h;return `${hh}${ap}`}
 function hZh(h){if(h===0)return '午夜12时';if(h===12)return '中午12时';return `${h<12?'上午':'下午'}${h>12?h-12:h}时`}
-function slotKey(dk,h){return `${dk}_h${h}`}
-
-const dates=[18,19,20,21,22].map(day=>{const d=new Date(2026,8,day);d.setHours(0,0,0,0);return d;});
+// slotKey: always uses the actual calendar date the hour belongs to
+function slotKey(d, h){return `${dayKey(d)}_h${h}`}
 
 let data={};
 let pending=null;
@@ -172,16 +186,16 @@ async function doLoad(){
   }
 }
 
-async function doSave(sk,names){
+async function doSave(sk, names){
+  setSyncState('loading','保存中 Saving…');
   try{
     const r=await fetch(`${DB}/${sk}.json`,{
-      method:'PUT',
+      method: names.length?'PUT':'DELETE',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(names)
+      body: names.length?JSON.stringify(names):undefined
     });
     if(!r.ok) throw new Error(r.status);
     setSyncState('ok','已保存 Saved');
-    showToast('报名成功 Signed up!');
   }catch(e){
     setSyncState('err','保存失败 Save failed');
     console.error(e);
@@ -198,37 +212,46 @@ function render(){renderGrid();renderWho();}
 function renderGrid(){
   const grid=document.getElementById('days-grid');
   grid.innerHTML='';
-  dates.forEach(d=>{
-    const dk=dayKey(d);
+  WAKE_DATES.forEach((wakeDay, di)=>{
     const col=document.createElement('div');
     col.className='day-col';
-    const count=HOUR_ORDER.reduce((s,h)=>{const v=data[slotKey(dk,h)];return s+(Array.isArray(v)?v.length:0);},0);
+    // Count all slots for this column (morning/afternoon/evening under wakeDay, overnight under wakeDay+1)
+    let count=0;
+    PERIODS.forEach(p=>{
+      const storeDay = p.offset===1 ? addDays(wakeDay,1) : wakeDay;
+      p.hours.forEach(h=>{
+        const sk=slotKey(storeDay,h);
+        const n=data[sk];
+        if(Array.isArray(n)) count+=n.length;
+      });
+    });
     col.innerHTML=`
       <div class="day-header">
-        <div class="day-zh">${DAYS_ZH[d.getDay()]}</div>
-        <div class="day-en">${DAYS_EN[d.getDay()]}</div>
-        <div class="day-date">${d.getDate()} ${MONTHS_EN[d.getMonth()]}</div>
+        <div class="day-zh">${DAYS_ZH[wakeDay.getDay()]}</div>
+        <div class="day-en">${DAYS_EN[wakeDay.getDay()]}</div>
+        <div class="day-date">${wakeDay.getDate()} ${MONTHS_EN[wakeDay.getMonth()]}</div>
         <div class="day-count">${count?count+'人':''}</div>
       </div>
-      <div class="slots" id="slots-${dk}"></div>`;
+      <div class="slots" id="slots-${di}"></div>`;
     grid.appendChild(col);
-    const slotsEl=col.querySelector(`#slots-${dk}`);
-    const dIdx=dates.findIndex(x=>dayKey(x)===dk);
+
+    const slotsEl=col.querySelector(`#slots-${di}`);
     PERIODS.forEach(p=>{
+      const storeDay = p.offset===1 ? addDays(wakeDay,1) : wakeDay;
       const pl=document.createElement('div');
       pl.className='period-label';
       pl.innerHTML=`<div class="period-zh">${p.zh}</div><div class="period-en">${p.en}</div>`;
       slotsEl.appendChild(pl);
-      for(let h=p.start;h<p.end;h++){
-        const sk=slotKey(dk,h);
+      p.hours.forEach(h=>{
+        const sk=slotKey(storeDay,h);
         const names=Array.isArray(data[sk])?data[sk]:[];
         const el=document.createElement('div');
         el.className='slot'+(names.length?' taken':'');
         const nameTags=names.map(n=>`<span>${n} <button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕ 删除</button></span>`).join(' ');
         el.innerHTML=`<div class="slot-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</div>${names.length?`<div class="slot-names">${nameTags}</div>`:'<div class="slot-add">＋报名</div>'}`;
-        el.onclick=(()=>{const _sk=sk;const _dk=dk;const _h=h;return()=>openModal(_dk,_h,_sk);})();
+        el.onclick=(()=>{const _sk=sk;const _sd=storeDay;const _h=h;const _wd=wakeDay;return()=>openModal(_wd,_sd,_h,_sk);})();
         slotsEl.appendChild(el);
-      }
+      });
     });
   });
 }
@@ -237,30 +260,31 @@ function renderWho(){
   const sec=document.getElementById('who-section');
   let html=`<div class="who-head"><div class="who-head-zh">所有值班人员</div><div class="who-head-en">All volunteers</div></div>`;
   let any=false;
-  dates.forEach((d,dIdx)=>{
-    const dk=dayKey(d);
+  WAKE_DATES.forEach((wakeDay)=>{
     const rows=[];
-    HOUR_ORDER.forEach(h=>{
-      const sk2=slotKey(dk,h);
-      const names=Array.isArray(data[sk2])?data[sk2]:[];
-      if(names.length){
-        const nameTags2=names.map(n=>`<span>${n} <button class="remove-btn" onclick="removeName(event,'${sk2}','${n.replace(/'/g,"\\'")}')">✕</button></span>`).join(' ');
-        rows.push(`<div class="who-row"><span class="who-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</span><span class="who-names">${nameTags2}</span></div>`);
-      }
+    PERIODS.forEach(p=>{
+      const storeDay = p.offset===1 ? addDays(wakeDay,1) : wakeDay;
+      p.hours.forEach(h=>{
+        const sk=slotKey(storeDay,h);
+        const names=Array.isArray(data[sk])?data[sk]:[];
+        if(names.length){
+          const nameTags=names.map(n=>`<span>${n} <button class="remove-btn" onclick="removeName(event,'${sk}','${n.replace(/'/g,"\\'")}')">✕</button></span>`).join(' ');
+          rows.push(`<div class="who-row"><span class="who-time">${hZh(h)}<br>${hEn(h)}–${hEn(h===23?0:h+1)}</span><span class="who-names">${nameTags}</span></div>`);
+        }
+      });
     });
     if(rows.length){
       any=true;
-      html+=`<div class="who-card"><div class="who-card-head"><div class="who-card-zh">${DAYS_ZH[d.getDay()]} ${d.getDate()}${MONTHS_ZH[d.getMonth()]}</div><div class="who-card-en">${DAYS_EN[d.getDay()]}, ${d.getDate()} ${MONTHS_EN[d.getMonth()]}</div></div>${rows.join('')}</div>`;
+      html+=`<div class="who-card"><div class="who-card-head"><div class="who-card-zh">${DAYS_ZH[wakeDay.getDay()]} ${wakeDay.getDate()}${MONTHS_ZH[wakeDay.getMonth()]}</div><div class="who-card-en">${DAYS_EN[wakeDay.getDay()]}, ${wakeDay.getDate()} ${MONTHS_EN[wakeDay.getMonth()]}</div></div>${rows.join('')}</div>`;
     }
   });
   if(!any) html+=`<div class="empty-who"><div class="empty-zh">暂无报名</div>No volunteers yet — be the first.</div>`;
   sec.innerHTML=html;
 }
 
-function openModal(dk,h,sk){
-  pending={dk,h,sk:sk||slotKey(dk,h)};
-  const d=dates.find(x=>dayKey(x)===dk)||dates[0];
-  document.getElementById('m-title').textContent=`${DAYS_ZH[d.getDay()]} ${d.getDate()}${MONTHS_ZH[d.getMonth()]}`;
+function openModal(wakeDay, storeDay, h, sk){
+  pending={sk};
+  document.getElementById('m-title').textContent=`${DAYS_ZH[wakeDay.getDay()]} ${wakeDay.getDate()}${MONTHS_ZH[wakeDay.getMonth()]}`;
   document.getElementById('m-info').textContent=`${hZh(h)}　${hEn(h)} – ${hEn(h===23?0:h+1)}`;
   document.getElementById('m-name').value='';
   document.getElementById('m-err').textContent='';
@@ -272,7 +296,7 @@ function closeModal(){document.getElementById('overlay').classList.remove('open'
 async function submit(){
   const name=document.getElementById('m-name').value.trim();
   if(!name){document.getElementById('m-err').textContent='请输入名字 / Enter your name.';return;}
-  const sk=pending.sk||slotKey(pending.dk,pending.h);
+  const sk=pending.sk;
   const names=Array.isArray(data[sk])?[...data[sk]]:[];
   if(names.includes(name)){document.getElementById('m-err').textContent='你已报名 / Already signed up.';return;}
   names.push(name);
@@ -280,6 +304,7 @@ async function submit(){
   closeModal();
   render();
   await doSave(sk,names);
+  showToast('报名成功 Signed up!');
   await doLoad();
 }
 
@@ -289,18 +314,9 @@ async function removeName(e,sk,name){
   const updated=names.filter(n=>n!==name);
   data[sk]=updated;
   render();
-  setSyncState('loading','保存中 Saving…');
-  try{
-    const r=await fetch(`${DB}/${sk}.json`,{
-      method: updated.length?'PUT':'DELETE',
-      headers:{'Content-Type':'application/json'},
-      body: updated.length?JSON.stringify(updated):undefined
-    });
-    if(!r.ok) throw new Error();
-    setSyncState('ok','已删除 Removed');
-    showToast('已删除 Removed');
-    await doLoad();
-  }catch{setSyncState('err','删除失败 Remove failed');}
+  await doSave(sk,updated);
+  showToast('已删除 Removed');
+  await doLoad();
 }
 
 function showToast(msg){
